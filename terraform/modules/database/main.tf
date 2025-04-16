@@ -55,6 +55,7 @@ resource "google_service_account" "sql_service_account" {
 
 locals {
    sql_sa_email = google_service_account.sql_service_account.email
+   sql_sa_name  = split("@", local.sql_sa_email)[0]
 }
 
 # Create an IAM Service Account user in Cloud SQL
@@ -88,4 +89,11 @@ resource "google_project_iam_member" "app_sql_client" {
   depends_on = [
     google_service_account.sql_service_account,
   ]
+}
+
+# Bind KSA to GSA for Workload Identity impersonation
+resource "google_service_account_iam_member" "ksa_workload_identity_user" {
+  service_account_id = google_service_account.sql_service_account.id
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[birthday-app-ns/birthday-app-sa]"
 }

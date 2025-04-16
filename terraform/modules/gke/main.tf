@@ -44,6 +44,11 @@ resource "google_container_cluster" "primary" {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
 
+  gateway_api_config {
+    # Enable the standard GKE Gateway controller
+    channel = "CHANNEL_STANDARD"
+  }
+
   # Lifecycle rule to prevent accidental deletion if default pool is removed later
   lifecycle {
     ignore_changes = [

@@ -23,6 +23,18 @@ variable "gke_subnet_ip_cidr_range" {
   type        = string
 }
 
+variable "proxy_subnet_name" {
+  description = "The name for the GKE subnet."
+  type        = string
+  default     = "gke-proxy-only-subnet"
+}
+
+variable "proxy_subnet_ip_cidr_range" {
+  description = "The primary IP range for the GKE subnet (for nodes)."
+  type        = string
+  default     = "10.40.0.0/24"
+}
+
 variable "gke_pods_ip_cidr_range_name" {
   description = "The name for the GKE Pods secondary IP range."
   type        = string

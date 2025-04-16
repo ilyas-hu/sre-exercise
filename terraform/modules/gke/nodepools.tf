@@ -9,6 +9,8 @@ resource "google_container_node_pool" "pools" {
 
   node_locations = lookup(each.value, "node_locations", [])
 
+  version    = google_container_cluster.primary.master_version
+
   autoscaling {
     min_node_count = lookup(each.value, "min_node_count", 1)
     max_node_count = lookup(each.value, "max_node_count", 3)
@@ -37,6 +39,10 @@ resource "google_container_node_pool" "pools" {
     labels = lookup(each.value, "node_labels", {})
     tags   = lookup(each.value, "node_tags", [])
 
+    resource_labels = {
+      "goog-gke-node-pool-provisioning-model" = "on-demand" 
+    }
+
     dynamic "taint" {
       for_each = lookup(each.value, "node_taints", [])
       content {
@@ -45,6 +51,12 @@ resource "google_container_node_pool" "pools" {
         effect = taint.value.effect
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      node_locations
+    ]
   }
 
   # Ensure cluster exists first and SA roles are bound

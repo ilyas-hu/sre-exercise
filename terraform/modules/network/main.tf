@@ -27,6 +27,22 @@ resource "google_compute_subnetwork" "gke_subnet" {
   depends_on = [google_compute_network.vpc_network]
 }
 
+# Proxy-Only Subnet for Regional L7 ILB/XLB (used by GKE Gateway)
+resource "google_compute_subnetwork" "proxy_only_subnet" {
+  project       = var.project_id
+  name          = var.proxy_subnet_name
+  ip_cidr_range = var.proxy_subnet_ip_cidr_range
+  region        = var.region
+  network       = google_compute_network.vpc_network.id
+
+  purpose       = "REGIONAL_MANAGED_PROXY"
+  role          = "ACTIVE"
+
+  description = "Proxy-only subnet for GKE Gateway managed L7 load balancers"
+
+  depends_on = [google_compute_network.vpc_network]
+}
+
 # Reserve IP Range for Private Service Access (Cloud SQL)
 resource "google_compute_global_address" "private_service_access_range" {
   project       = var.project_id

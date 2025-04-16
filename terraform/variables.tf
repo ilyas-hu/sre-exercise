@@ -95,14 +95,22 @@ variable "gke_node_pools" {
   }))
   default = [
     {
+      # Provide explicit defaults matching the 'optional' defaults above
       name           = "default-pool"
       machine_type   = "e2-medium"
+      disk_size_gb   = 100
+      disk_type      = "pd-standard"
+      initial_node_count = 1
       min_node_count = 1
       max_node_count = 3
-      node_labels = {
+      preemptible    = false
+      spot           = false
+      node_locations = []
+      node_labels    = {
         "workload-type" = "general"
       }
-      node_taints = []
+      node_tags      = []
+      node_taints    = []
     }
   ]
 }
