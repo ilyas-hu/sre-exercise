@@ -76,7 +76,9 @@ spec:
         args:
           - "$(SQL_INSTANCE_CONNECTION_NAME)"
           - "--private-ip"
-          - "--admin-port=5432" # Proxy listens on 5432 inside the pod
+          - "--auto-iam-authn"
+          - "--debug"
+          # - "--port=5432" # Proxy listens on 5432 inside the pod
         env:
         - name: SQL_INSTANCE_CONNECTION_NAME
           valueFrom:
