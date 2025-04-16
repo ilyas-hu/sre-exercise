@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: birthday-app-deployment
+  namespace: birthday-app-ns
+  labels:
+    app: birthday-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: birthday-app
+  template:
+    metadata:
+      labels:
+        app: birthday-app
+    spec:
+      serviceAccountName: birthday-app-sa
+      containers:
+      # --- Application Container ---
+      - name: birthday-app
+        # Placeholder for the full image path from Artifact Registry
+        image: __FULL_IMAGE_PATH__
+        ports:
+        - containerPort: 8000
+        env:
+        # Read DB config from ConfigMap
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: birthday-app-config
+              key: DB_USER
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: birthday-app-config
+              key: DB_NAME
+        - name: DATABASE_URL # Hostname for the app to connect to (proxy)
+          valueFrom:
+            configMapKeyRef:
+              name: birthday-app-config
+              key: DATABASE_URL
+        - name: DATABASE_PORT # Port for the app to connect to (proxy)
+          valueFrom:
+            configMapKeyRef:
+              name: birthday-app-config
+              key: DATABASE_PORT
+        # Construct the final DATABASE_URL for the application logic
+        # Format: postgresql+psycopg2://<user>@<host>:<port>/<dbname>
+        # Passwordless for IAM Auth
+        - name: APP_DATABASE_URL
+          value: "postgresql+psycopg2://$(DB_USER)@$(DATABASE_URL):$(DATABASE_PORT)/$(DB_NAME)"
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+
+      # --- Cloud SQL Auth Proxy Sidecar container ---
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
+        args:
+          - "$(SQL_INSTANCE_CONNECTION_NAME)"
+          - "--private-ip"
+          - "--admin-port=5432" # Proxy listens on 5432 inside the pod
+        env:
+        - name: SQL_INSTANCE_CONNECTION_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: birthday-app-config
+              key: SQL_INSTANCE_CONNECTION_NAME
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
