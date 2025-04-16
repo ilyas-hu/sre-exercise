@@ -60,7 +60,7 @@ locals {
 # Create an IAM Service Account user in Cloud SQL
 resource "google_sql_user" "iam_app_user" {
   project  = var.project_id
-  name     = split(local.sql_sa_email, "@")[0]
+  name     = trimsuffix(local.sql_sa_email, ".gserviceaccount.com")
   instance = google_sql_database_instance.instance.name
   type     = "CLOUD_IAM_SERVICE_ACCOUNT"
 
