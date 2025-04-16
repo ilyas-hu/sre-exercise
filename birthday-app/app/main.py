@@ -3,8 +3,20 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text # Needed for DB health check later
 from datetime import date
 
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s %(levelname)-8s [%(name)s] %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S%z',
+    stream=sys.stdout,
+)
+
 from . import crud, schemas, utils
 from .database import get_db
+
+logger = logging.getLogger("app")
 
 app = FastAPI(
     title="Birthday Greeting API",
@@ -39,8 +51,9 @@ async def health_check(
         # Try a simple query to check DB connection
         db.execute(text("SELECT 1"))
         db_status = "ok"
-    except Exception:
+    except Exception as e:
         db_status = "error"
+        logger.error(f"Health check database connection error: {e}", exc_info=True)
         # return status 503 Service Unavailable if DB fails
         raise HTTPException(status_code=503, detail="Database connection error")
 
@@ -67,7 +80,15 @@ async def save_user_dob(
 
     Returns HTTP 204 No Content on success.
     """
-    crud.create_or_update_user(db=db, username=username, dob=user_dob.dateOfBirth)
+    try:
+        crud.create_or_update_user(db=db, username=username, dob=user_dob.dateOfBirth)
+    except Exception as e:
+        logger.error(f"Error saving user for {username}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process request for user {username}."
+        )
+
     return None
 
 
@@ -91,6 +112,7 @@ async def get_birthday_message(
     """
     db_user = crud.get_user(db=db, username=username)
     if db_user is None:
+        logger.warning(f"User not found: {username}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     message = utils.calculate_birthday_message(db_user.username, db_user.date_of_birth)
