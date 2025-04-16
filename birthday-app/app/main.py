@@ -55,7 +55,7 @@ async def health_check(
         db_status = "error"
         logger.error(f"Health check database connection error: {e}", exc_info=True)
         # return status 503 Service Unavailable if DB fails
-        # raise HTTPException(status_code=503, detail="Database connection error")
+        raise HTTPException(status_code=503, detail="Database connection error")
 
     return {"status": "ok", "db_status": db_status}
 
