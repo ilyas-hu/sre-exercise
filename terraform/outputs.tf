@@ -1,6 +1,21 @@
-output "db_instance_connection_name" {
+output "project_id" {
+  description = "Id of the GCP project again which terraform is run"
+  value       = var.project_id
+}
+
+output "instance_connection_name" {
   description = "The connection name for the Cloud SQL database instance."
   value       = module.postgres_db.instance_connection_name
+}
+
+output "database_name" {
+  description = "Name of the initial database created by terraform"
+  value       = module.postgres_db.initial_database_name
+}
+
+output "app_gsa_email" {
+  description = "The email of the initial IAM user created (the GSA email)."
+  value       = module.postgres_db.app_gsa_email
 }
 
 output "network_name" {
@@ -25,7 +40,7 @@ output "gke_cluster_ca_certificate" {
   sensitive   = true
 }
 
-output "repository_url" {
+output "artifact_registry_repo_url" {
   description = "The full URL of the repository, used for docker login/push/pull."
   value       = module.docker_repo.repository_url
-}  
+}

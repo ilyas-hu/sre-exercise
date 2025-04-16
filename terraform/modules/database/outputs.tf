@@ -28,3 +28,8 @@ output "iam_user_name" {
   description = "The name of the initial IAM user created (the GSA email)."
   value       = google_sql_user.iam_app_user.name
 }
+
+output "app_gsa_email" {
+  description = "The email of the initial IAM user created (the GSA email)."
+  value       = local.sql_sa_email
+}
