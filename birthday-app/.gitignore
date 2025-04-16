@@ -9,3 +9,5 @@ venv/
 env/
 test.db*
 .DS_Store
+k8s_processed
+tf_outputs.json
