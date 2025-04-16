@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.env
+.git/
+.gitignore
+.dockerignore
+docker-compose.yml
+Dockerfile
+venv/
+.venv/
+env/
+test.db*
+.DS_Store
