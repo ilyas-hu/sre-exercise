@@ -6,7 +6,7 @@ metadata:
 data:
   # Placeholders to be updated from TF output or variables
   SQL_INSTANCE_CONNECTION_NAME: "__SQL_INSTANCE_CONNECTION_NAME__"
-  DB_USER: "__GSA_EMAIL__" # Use the GSA email for IAM Auth username
-  DB_NAME: "__SQL_DB_NAME__"
+  DATABASE_USER: "__GSA_EMAIL__" # Use the GSA email for IAM Auth username
+  DATABASE_NAME: "__SQL_DB_NAME__"
   DATABASE_URL: "127.0.0.1" # Host points to proxy within the pod
   DATABASE_PORT: "5432"     # Port points to proxy within the pod

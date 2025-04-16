@@ -25,16 +25,16 @@ spec:
         - containerPort: 8000
         env:
         # Read DB config from ConfigMap
-        - name: DB_USER
+        - name: DATABASE_USER
           valueFrom:
             configMapKeyRef:
               name: birthday-app-config
-              key: DB_USER
-        - name: DB_NAME
+              key: DATABASE_USER
+        - name: DATABASE_NAME
           valueFrom:
             configMapKeyRef:
               name: birthday-app-config
-              key: DB_NAME
+              key: DATABASE_NAME
         - name: DATABASE_URL # Hostname for the app to connect to (proxy)
           valueFrom:
             configMapKeyRef:
@@ -45,11 +45,6 @@ spec:
             configMapKeyRef:
               name: birthday-app-config
               key: DATABASE_PORT
-        # Construct the final DATABASE_URL for the application logic
-        # Format: postgresql+psycopg2://<user>@<host>:<port>/<dbname>
-        # Passwordless for IAM Auth
-        - name: APP_DATABASE_URL
-          value: "postgresql+psycopg2://$(DB_USER)@$(DATABASE_URL):$(DATABASE_PORT)/$(DB_NAME)"
 
         livenessProbe:
           httpGet:
