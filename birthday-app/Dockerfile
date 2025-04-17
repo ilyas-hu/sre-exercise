@@ -5,6 +5,9 @@ WORKDIR /app
 # Create a non-root user and group
 RUN addgroup --system app && adduser --system --group app
 
+# Install procps to get ps/kill commands needed for job sidecar termination
+RUN apt-get update && apt-get install -y --no-install-recommends procps && rm -rf /var/lib/apt/lists/*
+
 # Copy and Install requirements.txt
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

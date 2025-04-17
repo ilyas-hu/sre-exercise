@@ -15,5 +15,5 @@ TF_OUTPUT_BUCKET: The name of the GCS bucket for state file and outputs.
 
 GCP_PROJECT_ID: Your Google Cloud Project ID.
 
-TF_OUTPUT_PATH: Path within the bucket for the output file (e.g., tf-outputs/birthday-app/outputs.json).
+TF_OUTPUT_PATH: Path within the bucket for the output file (tf-outputs).
 
