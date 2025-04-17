@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application is a simple FastAPI service designed to store user date of births and provide greetings based on upcoming birthdays. (see main [README.md](../../README.md)).
+This application is a simple FastAPI service designed to store user date of births and provide greetings based on upcoming birthdays.
 
 The core functionality includes:
 * Saving/updating a user's date of birth via a PUT request.
@@ -15,11 +15,9 @@ The core functionality includes:
 * **Database:** PostgreSQL (via Cloud SQL in deployment, local container for development)
 * **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/)
 * **Migrations:** [Alembic](https://alembic.sqlalchemy.org/en/latest/)
-* **DB Driver:** [psycopg2-binary](https://pypi.org/project/psycopg2-binary/)
-* **Server:** [Uvicorn](https://www.uvicorn.org/)
-* **Testing:** [pytest](https://docs.pytest.org/), [pytest-asyncio](https://pytest-asyncio.readthedocs.io/), [HTTPX](https://www.python-httpx.org/)
+* **Testing:** [pytest](https://docs.pytest.org/)
 * **Containerization:** Docker, Docker Compose (for local dev)
-* **Language:** Python 3.13
+* **Language:** Python
 
 ## Local Development Setup
 
@@ -74,10 +72,10 @@ Instructions for running the application locally using Docker Compose.
 * **Platform:** Google Kubernetes Engine (GKE)
 * **Database:** Cloud SQL for PostgreSQL (using Private IP)
 * **Registry:** Google Artifact Registry (for Docker images)
-* **Connectivity:** Application connects to the database via the Cloud SQL Auth Proxy sidecar using Workload Identity and IAM database authentication (passwordless).
+* **Connectivity:** Application connects to the database via the Cloud SQL Auth Proxy sidecar using Workload Identity and IAM database authentication.
 * **Exposure:** The application is exposed via the Kubernetes Gateway API.
-* **Automation:** Deployment is handled via GitHub Actions workflows defined in the `.github/workflows` directory (see main [README.md](../../README.md) for CI/CD details).
-* **Manual Steps:** Note that initial database permissions for the application's service account need to be granted manually after infrastructure setup (see main [README.md](../../README.md)).
+* **Automation:** Deployment is handled via GitHub Actions workflows defined in the `.github/workflows` directory.
+* **Manual Steps:** Note that initial database permissions for the application's service account need to be granted manually after infrastructure setup.
 
 ## API Endpoints
 

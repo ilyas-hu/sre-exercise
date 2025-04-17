@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains the Terraform configuration for provisioning the Google Cloud Platform (GCP) infrastructure required by the Birthday App.
+This directory contains terraform configuration for provisioning Google Cloud Platform (GCP) infrastructure required by the Birthday App.
 
 It manages the following core resources:
 * Google Kubernetes Engine (GKE) Cluster
@@ -12,11 +12,11 @@ It manages the following core resources:
 * Associated IAM Service Accounts and Bindings
 * Enabling necessary GCP Services
 
-This infrastructure is designed to support the application deployment as described in the main project [README.md](../../README.md).
+This infrastructure is designed to support the application deployment as described in the main project [README.md](../Readme.md).
 
 ## Structure
 
-This configuration uses a modular approach:
+The configuration uses a modular approach:
 * The root `main.tf` orchestrates the deployment.
 * Reusable modules for different components (Network, GKE, Database, Artifact Registry, Project Services) are located in the `modules/` subdirectory.
 * Variables are defined in `variables.tf` files (root and within modules).
@@ -26,7 +26,7 @@ This configuration uses a modular approach:
 
 * [Terraform CLI](https://developer.hashicorp.com/terraform/downloads)
 * [Google Cloud SDK (`gcloud`)](https://cloud.google.com/sdk/docs/install)
-* Authenticated GCP Credentials: Run `gcloud auth login` and `gcloud auth application-default login`. Ensure the authenticated user/SA has sufficient permissions (see CI/CD section for detailed permission required).
+* Authenticated GCP Credentials: Run `gcloud auth login` and `gcloud auth application-default login`. Ensure the authenticated user/SA has sufficient permissions.
 
 ## Configuration
 
@@ -50,7 +50,7 @@ Input variables are defined in `variables.tf`. Most of the variable have default
     # terraform.tfvars
     project_id = "PROJECT_ID"
 
-    # Add any other variables you want to override from their defaults
+    # Add any other variables to override from their defaults
     # region                     = "europe-central2"
     # network_name             = "my-custom-vpc"
     # db_instance_name         = "my-custom-db"
@@ -94,11 +94,11 @@ Execute these commands from within the `terraform/` directory.
 
 ## CI/CD Pipeline
 
-* This infrastructure is automatically deployed via the GitHub Actions workflow defined in `.github/workflows/infrastructure.yaml`.
+* The infrastructure is automatically deployed via GitHub Actions workflow defined in `.github/workflows/infrastructure.yaml`.
 * The pipeline triggers on changes to the `terraform/**` directory on the `main` branch.
 * It uses a Service Account Key (stored in GitHub Secrets) for GCP authentication, can be replaced with workload identity for more security
 * After a successful `apply`, it generates an `outputs.json` file and uploads it to the configured GCS bucket (`TF_OUTPUT_BUCKET`/`TF_OUTPUT_PATH`) for the application deployment pipeline to consume.
-* Refer to the main project [README.md](../../README.md) or the workflow file for more details.
+* Refer to the main project [README.md](../Readme.md) or the workflow file for more details.
 
 ## Outputs
 
