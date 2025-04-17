@@ -45,6 +45,10 @@ jobs:
       # 3. Setup gcloud SDK
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
+      
+      # Add gke auth plugin
+      - name: Install gke-gcloud-auth-plugin
+        run: gcloud components install gke-gcloud-auth-plugin --quiet
 
       # 4. Install jq (for parsing Terraform outputs)
       - name: Install jq
