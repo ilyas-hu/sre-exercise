@@ -53,7 +53,7 @@ jobs:
 
       - name: Download Terraform Outputs
         run: |
-          gsutil cp gs://${{ secrets.TF_OUTPUT_BUCKET }}/${{ vars.TF_OUTPUT_PATH }}//outputs.json ./terraform_outputs.json
+          gsutil cp gs://${{ secrets.TF_OUTPUT_BUCKET }}/${{ vars.TF_OUTPUT_PATH }}/outputs.json ./terraform_outputs.json
           echo "Download complete."
           if [ ! -f ./terraform_outputs.json ]; then
             echo "Error: Failed to download terraform_outputs.json"
