@@ -1,19 +1,114 @@
-# Setup Required (Using Service Account Key)
+# Terraform Infrastructure for Birthday App
 
-## Create GCP Service Account: 
-Create a Google Service Account in GCP project that will be used by terraform. Grant the service account necessary Permissions to manage all the resources defined in Terraform code (GKE Admin, Compute Network Admin, Cloud SQL Admin, Service Account Admin, IAM Role Admin, Artifact Registry Admin, Service Usage Admin ) and permission to write to the GCS bucket (roles/storage.objectAdmin on the bucket).
+## Overview
 
-Create Service Account Key: Generate and download the JSON key file.
+This directory contains the Terraform configuration for provisioning the Google Cloud Platform (GCP) infrastructure required by the Birthday App.
 
-## GitHub Secrets:
+It manages the following core resources:
+* Google Kubernetes Engine (GKE) Cluster
+* Cloud SQL for PostgreSQL Instance (with Private IP)
+* VPC Network, Subnets (GKE, PSA, Proxy-only subnet), Firewall Rules
+* Artifact Registry Repository (for Docker images)
+* Associated IAM Service Accounts and Bindings
+* Enabling necessary GCP Services
 
-GCP_SA_KEY: Content of the downloaded JSON key file.
+This infrastructure is designed to support the application deployment as described in the main project [README.md](../../README.md).
 
-TF_OUTPUT_BUCKET: The name of the GCS bucket for state file and outputs.
+## Structure
 
-## GitHub Variables:
+This configuration uses a modular approach:
+* The root `main.tf` orchestrates the deployment.
+* Reusable modules for different components (Network, GKE, Database, Artifact Registry, Project Services) are located in the `modules/` subdirectory.
+* Variables are defined in `variables.tf` files (root and within modules).
+* Outputs are defined in `outputs.tf` files (root and within modules).
 
-GCP_PROJECT_ID: Your Google Cloud Project ID.
+## Prerequisites (Local Usage)
 
-TF_OUTPUT_PATH: Path within the bucket for the output file (tf-outputs).
+* [Terraform CLI](https://developer.hashicorp.com/terraform/downloads)
+* [Google Cloud SDK (`gcloud`)](https://cloud.google.com/sdk/docs/install)
+* Authenticated GCP Credentials: Run `gcloud auth login` and `gcloud auth application-default login`. Ensure the authenticated user/SA has sufficient permissions (see CI/CD section for detailed permission required).
+
+## Configuration
+
+### Backend
+
+Terraform state is stored remotely in a Google Cloud Storage (GCS) bucket. The configuration is done via partial backend configuration during `init`.
+
+1.  It's configued with empty `backend "gcs" {}` block
+2.  To run locally using terraform init use the following 
+    ```bash
+        terraform init \
+            -backend-config="bucket=TF_STATE_FILE_BUCKET" \
+            -backend-config="prefix=birthday-app/tfstate"
+    ```
+
+### Variables
+
+Input variables are defined in `variables.tf`. Most of the variable have default values but `project_id` must be passed for initialization either using environment variable like TF_VAR_project_id or using a local rerraform.tfvars file.
+
+    ```hcl
+    # terraform.tfvars
+    project_id = "PROJECT_ID"
+
+    # Add any other variables you want to override from their defaults
+    # region                     = "europe-central2"
+    # network_name             = "my-custom-vpc"
+    # db_instance_name         = "my-custom-db"
+    # gke_cluster_name         = "my-custom-cluster"
+    # vpc_proxy_only_subnet_cidr = "10.129.0.0/23"
+    # app_gsa_email            = "your-app-gsa@your-project.iam.gserviceaccount.com"
+    # master_authorized_networks = [ ... ] 
+    ```
+
+## Local Usage
+
+Execute these commands from within the `terraform/` directory.
+
+1.  **Initialize Terraform:**
+    ```bash
+        terraform init \
+            -backend-config="bucket=TF_STATE_FILE_BUCKET" \
+            -backend-config="prefix=birthday-app/tfstate"
+    ```
+
+2.  **Validate Configuration:**
+    ```bash
+    terraform validate
+    ```
+
+3.  **Plan Changes:** Create an execution plan.
+    ```bash
+    terraform plan -out=tfplan
+    ```
+    Review the `tfplan` output.
+
+4.  **Apply Changes:** Apply the planned changes.
+    ```bash
+    terraform apply tfplan
+    ```
+
+5.  **Destroy Infrastructure:**
+    ```bash
+    terraform destroy
+    ```
+
+## CI/CD Pipeline
+
+* This infrastructure is automatically deployed via the GitHub Actions workflow defined in `.github/workflows/infrastructure.yaml`.
+* The pipeline triggers on changes to the `terraform/**` directory on the `main` branch.
+* It uses a Service Account Key (stored in GitHub Secrets) for GCP authentication, can be replaced with workload identity for more security
+* After a successful `apply`, it generates an `outputs.json` file and uploads it to the configured GCS bucket (`TF_OUTPUT_BUCKET`/`TF_OUTPUT_PATH`) for the application deployment pipeline to consume.
+* Refer to the main project [README.md](../../README.md) or the workflow file for more details.
+
+## Outputs
+
+Key outputs generated by this configuration (and stored in GCS by the pipeline) include:
+* `instance_connection_name`: Cloud SQL instance connection name (for proxy).
+* `database_name`: Name of the application database.
+* `iam_user_name`: Short name of the application's IAM database user.
+* `artifact_registry_repo_url`: URL for the Docker image repository.
+* `gke_cluster_name`: Name of the GKE cluster.
+* `gke_cluster_location`: Location of the GKE cluster.
+
+Refer to `outputs.tf` for the full list.
 
