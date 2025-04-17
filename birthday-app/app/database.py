@@ -28,7 +28,7 @@ else:
     logger.info("Using IAM Authentication (no password) for database connection.")
     # URL encode the GSA email (username) because it contains '@'
     encoded_user = urllib.parse.quote_plus(db_user)
-    SQLALCHEMY_DATABASE_URL = f"postgresql://{encoded_user}@{db_url}:{db_port}/{db_name}"
+    SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{encoded_user}@{db_url}:{db_port}/{db_name}"
 
 logger.info(f"Database URL configured: postgresql+psycopg2://****:****@{db_url}:{db_port}/{db_name}") # Log without credentials
 

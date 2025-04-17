@@ -35,12 +35,12 @@ spec:
             configMapKeyRef:
               name: birthday-app-config
               key: DATABASE_NAME
-        - name: DATABASE_URL # Hostname for the app to connect to (proxy)
+        - name: DATABASE_URL
           valueFrom:
             configMapKeyRef:
               name: birthday-app-config
               key: DATABASE_URL
-        - name: DATABASE_PORT # Port for the app to connect to (proxy)
+        - name: DATABASE_PORT
           valueFrom:
             configMapKeyRef:
               name: birthday-app-config
@@ -78,8 +78,6 @@ spec:
           - "--private-ip"
           - "--auto-iam-authn"
           - "$(SQL_INSTANCE_CONNECTION_NAME)"
-          # - "--debug"
-          # - "--port=5432" # Proxy listens on 5432 inside the pod
         env:
         - name: SQL_INSTANCE_CONNECTION_NAME
           valueFrom:

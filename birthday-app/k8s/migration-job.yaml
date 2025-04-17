@@ -1,0 +1,85 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alembic-migration-job
+  namespace: birthday-app-ns
+  labels:
+    app: birthday-app
+    task: db-migration
+spec:
+  # --- Job Configuration ---
+  template:
+    metadata:
+      labels:
+        app: birthday-app
+        task: db-migration
+    spec:
+      serviceAccountName: birthday-app-sa
+      # --- Containers ---
+      containers:
+        # 1. Main container to run the Alembic command
+        - name: alembic-migrate
+          image: __FULL_IMAGE_PATH__
+          # Override the default command to run Alembic instead of Uvicorn
+          command: ["alembic"]
+          args: ["upgrade", "head"]
+          env:
+          # Read DB config from ConfigMap
+          - name: DATABASE_USER
+            valueFrom:
+              configMapKeyRef:
+                name: birthday-app-config
+                key: DATABASE_USER
+          - name: DATABASE_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: birthday-app-config
+                key: DATABASE_NAME
+          - name: DATABASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: birthday-app-config
+                key: DATABASE_URL
+          - name: DATABASE_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: birthday-app-config
+                key: DATABASE_PORT
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+
+        # 2. Cloud SQL Proxy Sidecar (identical to the one in deployment.yaml)
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
+          args:
+            - "--structured-logs"
+            - "--private-ip"
+            - "--auto-iam-authn"
+            - "$(SQL_INSTANCE_CONNECTION_NAME)"
+          env:
+          - name: SQL_INSTANCE_CONNECTION_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: birthday-app-config
+                key: SQL_INSTANCE_CONNECTION_NAME
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+
+      restartPolicy: OnFailure
+
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600 #clean up after 1 hour
+

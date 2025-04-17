@@ -65,11 +65,16 @@ $SED_CMD "s#__GSA_EMAIL__#${GSA_EMAIL}#g" "${K8S_OUTPUT_DIR}/serviceaccount.yaml
 
 # --- ConfigMap ---
 $SED_CMD "s#__SQL_INSTANCE_CONNECTION_NAME__#${SQL_INSTANCE_CONNECTION_NAME}#g" "${K8S_OUTPUT_DIR}/configmap.yaml"
-$SED_CMD "s#__GSA_EMAIL__#${GSA_EMAIL}#g" "${K8S_OUTPUT_DIR}/configmap.yaml"
+# The last part need to be removed for IAM auth to work for some reason, with it DB is asking for password and auth failure
+DB_IAM_USER=$(echo "$GSA_EMAIL" | sed 's/\.gserviceaccount\.com$//') 
+$SED_CMD "s#__DB_IAM_USER__#${DB_IAM_USER}#g" "${K8S_OUTPUT_DIR}/configmap.yaml"
 $SED_CMD "s#__SQL_DB_NAME__#${SQL_DB_NAME}#g" "${K8S_OUTPUT_DIR}/configmap.yaml"
 
 # --- Deployment ---
 $SED_CMD "s#__FULL_IMAGE_PATH__#${FULL_IMAGE_PATH}#g" "${K8S_OUTPUT_DIR}/deployment.yaml"
+
+# --- Migration Job ---  
+$SED_CMD "s#__FULL_IMAGE_PATH__#${FULL_IMAGE_PATH}#g" "${K8S_OUTPUT_DIR}/migration-job.yaml"
 
 # --- Clean up backup files ---
 find "$K8S_OUTPUT_DIR" -name '*.bak' -delete
