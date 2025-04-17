@@ -50,13 +50,16 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      # 5. Download Terraform Outputs from GCS
+
       - name: Download Terraform Outputs
-        uses: google-github-actions/download-cloud-storage@v2
-        with:
-          bucket: ${{ secrets.TF_OUTPUT_BUCKET }}
-          source: ${{ vars.TF_OUTPUT_PATH }}/outputs.json
-          destination: ./terraform_outputs.json
+        run: |
+          gsutil cp gs://${{ secrets.TF_OUTPUT_BUCKET }}/${{ vars.TF_OUTPUT_PATH }}//outputs.json ./terraform_outputs.json
+          echo "Download complete."
+          if [ ! -f ./terraform_outputs.json ]; then
+            echo "Error: Failed to download terraform_outputs.json"
+            exit 1
+          fi
+        shell: bash
 
       # 6. Extract TF Outputs & Configure Docker Auth
       - name: Extract TF Outputs and Configure Docker
