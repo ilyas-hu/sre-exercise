@@ -6,6 +6,7 @@ variable "project_id" {
 variable "region" {
   description = "The GCP region to deploy resources in"
   type        = string
+  default     = "europe-central2"
 }
 
 variable "project_services_to_enable" {
@@ -64,6 +65,7 @@ variable "gke_cluster_name" {
 variable "gke_master_authorized_cidr_block" {
   description = "The CIDR block authorized to access the GKE master endpoint."
   type        = string
+  default     = "0.0.0.0/0"
 }
 
 variable "gke_master_authorized_display_name" {
