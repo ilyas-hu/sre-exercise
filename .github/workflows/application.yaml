@@ -136,7 +136,7 @@ jobs:
 
       # 14. Apply Migration Job
       - name: Apply Migration Job
-        run: kubectl apply -f k8s_processed/job-migrate.yaml -n birthday-app-ns
+        run: kubectl apply -f k8s_processed/migration-job.yaml -n birthday-app-ns
         working-directory: ./birthday-app
 
       # 15. Wait for Migration Job Completion
