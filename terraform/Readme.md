@@ -1,16 +1,19 @@
 # Setup Required (Using Service Account Key)
+
 ## Create GCP Service Account: 
-Create a Google Service Account your GCP project that Terraform will use.
+Create a Google Service Account in GCP project that will be used by terraform. Grant the service account necessary Permissions to manage all the resources defined in Terraform code (GKE Admin, Compute Network Admin, Cloud SQL Admin, Service Account Admin, IAM Role Admin, Artifact Registry Admin, Service Usage Admin ) and permission to write to the GCS bucket (roles/storage.objectAdmin on the bucket).
 
-Grant GSA Permissions: Assign sufficient IAM roles to this GSA in GCP to manage all the resources defined in Terraform code (GKE Admin, Compute Network Admin, Cloud SQL Admin, Service Account Admin, IAM Role Admin, Artifact Registry Admin, Service Usage Admin ) AND permission to write to the GCS bucket (roles/storage.objectAdmin on the bucket).
+Create Service Account Key: Generate and download the JSON key file.
 
-Create Service Account Key: Generate a JSON key file for this GSA. Download the JSON key file.
+## GitHub Secrets:
 
-Configure The following GitHub Secret and variable:
+GCP_SA_KEY: Content of the downloaded JSON key file.
 
-GCP_SA_KEY = content of the downloaded JSON key file.
+TF_OUTPUT_BUCKET: The name of the GCS bucket for state file and outputs.
 
-TF_OUTPUT_BUCKET (Secret): The name of the GCS bucket used for both state and outputs.
+## GitHub Variables:
 
-TF_OUTPUT_PATH (Variable): The path within the bucket where the output file should be stored (e.g., tf-outputs/birthday-app/outputs.json).
+GCP_PROJECT_ID: Your Google Cloud Project ID.
+
+TF_OUTPUT_PATH: Path within the bucket for the output file (e.g., tf-outputs/birthday-app/outputs.json).
 

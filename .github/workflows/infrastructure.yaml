@@ -23,14 +23,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  terraform-apply:
-    name: 'Terraform Apply Infra Changes'
+  terraform-plan-and-apply:
+    name: 'Terraform Plan and Apply'
     runs-on: ubuntu-latest
 
     # Set default working directory for Terraform commands
     defaults:
       run:
         working-directory: ./terraform
+
+    env:
+      TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
 
     steps:
       # 1. Checkout code
