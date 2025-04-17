@@ -8,7 +8,7 @@ K8S_TEMPLATE_DIR="./k8s"
 # Directory where the processed manifests will be written
 K8S_OUTPUT_DIR="./k8s_processed"
 # Terraform output file (JSON format)
-TF_OUTPUT_FILE="tf_outputs.json"
+TF_OUTPUT_FILE="../terraform_outputs.json"
 # Default Image Tag (can be overridden by command line argument)
 DEFAULT_IMAGE_TAG="latest"
 
@@ -16,12 +16,6 @@ DEFAULT_IMAGE_TAG="latest"
 # Use provided tag or default to 'latest'
 IMAGE_TAG="${1:-$DEFAULT_IMAGE_TAG}"
 echo "Using Image Tag: $IMAGE_TAG"
-
-# === Get Terraform Outputs ===
-echo "Fetching Terraform outputs..."
-# Run from the terraform directory
-(cd ../terraform && terraform output -json > ../birthday-app/"$TF_OUTPUT_FILE")
-echo "Terraform outputs saved to $TF_OUTPUT_FILE"
 
 # === Check for jq ===
 if ! command -v jq &> /dev/null

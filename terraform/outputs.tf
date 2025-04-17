@@ -28,6 +28,11 @@ output "gke_cluster_name" {
   value       = module.gke_cluster.cluster_name
 }
 
+output "gke_cluster_location" {
+  description = "Location of the GKE Cluster."
+  value       = module.gke_cluster.cluster_location
+}
+
 output "gke_cluster_endpoint" {
   description = "The endpoint for the GKE cluster control plane."
   value       = module.gke_cluster.cluster_endpoint

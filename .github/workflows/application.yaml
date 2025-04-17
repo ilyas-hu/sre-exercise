@@ -1,0 +1,147 @@
+name: 'CI/CD - Application Deployment'
+
+on:
+  # Trigger on pushes to the main branch
+  push:
+    branches:
+      - main
+    # Only run if files in the birthday-app directory changed or workflow file changes
+    paths:
+      - 'birthday-app/**'
+      - '.github/workflows/application.yaml'
+      - '!.github/workflows/infrastructure.yaml'
+
+  # Allows manual triggering from the Actions tab
+  workflow_dispatch:
+
+# Permissions needed for checkout
+permissions:
+  contents: 'read'
+
+# Prevent concurrent runs for application deployment
+concurrency:
+  group: 'app-deploy'
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: 'Build and Deploy Application'
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Authenticate to Google Cloud using Service Account Key
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 3. Setup gcloud SDK
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # 4. Install jq (for parsing Terraform outputs)
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      # 5. Download Terraform Outputs from GCS
+      - name: Download Terraform Outputs
+        uses: google-github-actions/download-cloud-storage@v2
+        with:
+          bucket: ${{ secrets.TF_OUTPUT_BUCKET }}
+          source: ${{ vars.TF_OUTPUT_PATH }}/outputs.json
+          destination: ./terraform_outputs.json
+
+      # 6. Extract TF Outputs & Configure Docker Auth
+      - name: Extract TF Outputs and Configure Docker
+        id: tf-outputs
+        run: |
+          echo "Extracting outputs..."
+          AR_REPO_URL=$(jq -e -r '.artifact_registry_repo_url.value // empty' terraform_outputs.json)
+          GKE_CLUSTER_NAME=$(jq -e -r '.gke_cluster_name.value // empty' terraform_outputs.json)
+          GKE_CLUSTER_LOCATION=$(jq -e -r '.gke_cluster_location.value // empty' terraform_outputs.json)
+
+          if [ -z "$AR_REPO_URL" ] || [ -z "$GKE_CLUSTER_NAME" ] || [ -z "$GKE_CLUSTER_LOCATION" ]; then
+            echo "Error: Missing required outputs (artifact_registry_repo_url, gke_cluster_name, gke_cluster_location) in terraform_outputs.json"
+            exit 1
+          fi
+
+          # Store outputs for subsequent steps
+          echo "AR_REPO_URL=$AR_REPO_URL" >> $GITHUB_ENV
+          echo "GKE_CLUSTER_NAME=$GKE_CLUSTER_NAME" >> $GITHUB_ENV
+          echo "GKE_CLUSTER_LOCATION=$GKE_CLUSTER_LOCATION" >> $GITHUB_ENV
+
+          echo "Configuring Docker authentication..."
+          AR_HOSTNAME=$(echo $AR_REPO_URL | cut -d/ -f1)
+          gcloud auth configure-docker $AR_HOSTNAME
+        shell: bash
+
+      # 7. Setup Docker Buildx
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 8. Determine Image Tag
+      - name: Determine Image Tag
+        id: image-tag
+        run: |
+          TAG=$(echo ${GITHUB_SHA} | cut -c1-7)
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+          echo "Using image tag: $TAG"
+        shell: bash
+
+      # 9. Build and Push Docker Image
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./birthday-app
+          file: ./birthday-app/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.AR_REPO_URL }}/birthday-app:${{ env.IMAGE_TAG }}
+
+      # 11. Get GKE Credentials
+      - name: Get GKE Credentials
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} \
+            --region ${{ env.GKE_CLUSTER_LOCATION }} \
+            --project ${{ vars.GCP_PROJECT_ID }}
+
+      # 12. Run Update Manifests Script
+      - name: Update Kubernetes Manifests
+        run: ./update_manifests.sh ${{ env.IMAGE_TAG }}
+        working-directory: ./birthday-app
+
+      # 13. Apply Namespace, ConfigMap, ServiceAccount first
+      - name: Apply Prerequisite K8s Resources
+        run: |
+          kubectl apply -f k8s_processed/namespace.yaml
+          kubectl apply -f k8s_processed/configmap.yaml -n birthday-app-ns
+          kubectl apply -f k8s_processed/serviceaccount.yaml -n birthday-app-ns
+        working-directory: ./birthday-app # Path relative to checkout root
+
+      # 14. Apply Migration Job
+      - name: Apply Migration Job
+        run: kubectl apply -f k8s_processed/job-migrate.yaml -n birthday-app-ns
+        working-directory: ./birthday-app
+
+      # 15. Wait for Migration Job Completion
+      - name: Wait for Migration Job
+        run: kubectl wait --for=condition=complete job/alembic-migration-job -n birthday-app-ns --timeout=5m
+
+      # 16. Apply App Deployment and Networking
+      - name: Apply App Deployment & Networking
+        run: |
+          kubectl apply -f k8s_processed/deployment.yaml -n birthday-app-ns
+          kubectl apply -f k8s_processed/service.yaml -n birthday-app-ns
+          kubectl apply -f k8s_processed/gateway.yaml -n birthday-app-ns # Or GW namespace
+          kubectl apply -f k8s_processed/httproute.yaml -n birthday-app-ns
+        working-directory: ./birthday-app
+

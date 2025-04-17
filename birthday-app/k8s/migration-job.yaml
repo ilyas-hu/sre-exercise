@@ -15,37 +15,25 @@ spec:
         task: db-migration
     spec:
       serviceAccountName: birthday-app-sa
-      shareProcessNamespace: true
       # --- Containers ---
       containers:
         # 1. Main container to run the Alembic command
         - name: alembic-migrate
           image: __FULL_IMAGE_PATH__
-          # Override the default command to run Alembic instead of Uvicorn
-          # command: ["alembic"]
-          # args: ["upgrade", "head"]
           command: ["/bin/sh", "-c"]
           args:
             - |
+              sleep 10
               echo "Starting migration..."
               # Run alembic and capture exit code
               alembic upgrade head
               ALEMBIC_EXIT_CODE=$?
               echo "Alembic finished with exit code $ALEMBIC_EXIT_CODE"
 
-              # Find and terminate the proxy process
-              echo "Terminate cloud-sql-proxy..."
-              PROXY_PID=$(ps aux | grep cloud_sql_proxy | grep -v grep | awk '{print $1}')
-
-              if [ -n "$PROXY_PID" ]; then
-                echo "Found proxy PID: $PROXY_PID. Sending SIGTERM..."
-                kill -TERM $PROXY_PID
-                # Wait a moment for graceful shutdown
-                sleep 5
-              else
-                echo "Proxy PID not found."
-              fi
-
+              echo "Signaling proxy to quit via http://localhost:9090/quitquitquit..."
+              curl -X POST http://localhost:9091/quitquitquit || echo "Failed to send quit signal"
+              echo "Quit signal sent."
+              sleep 10
               echo "Exiting migration container."
               exit $ALEMBIC_EXIT_CODE
 
@@ -86,7 +74,7 @@ spec:
             - "--structured-logs"
             - "--private-ip"
             - "--auto-iam-authn"
-            - "--quit-on-zero-connections"
+            - "--quitquitquit"
             - "$(SQL_INSTANCE_CONNECTION_NAME)"
           env:
           - name: SQL_INSTANCE_CONNECTION_NAME
@@ -105,8 +93,7 @@ spec:
               cpu: "200m"
               memory: "128Mi"
 
-      restartPolicy: OnFailure
+      restartPolicy: Never
 
-  backoffLimit: 2
+  backoffLimit: 0
   ttlSecondsAfterFinished: 3600 #clean up after 1 hour
-
