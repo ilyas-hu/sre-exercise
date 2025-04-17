@@ -47,6 +47,19 @@ Instructions for provisioning the necessary GCP infrastructure using Terraform c
 
 This repository uses GitHub Actions for automated workflows:
 
+The service account used by CI/CD Pipeline will need the following permission to create infrastructure and dploy the application:
+    * Artifact Registry Administrator
+    * Cloud SQL Admin
+    * Compute Admin
+    * Compute Network Admin
+    * Kubernetes Engine Admin
+    * Project IAM Admin
+    * Service Account Admin
+    * Service Account User
+    * Service Networking Admin
+    * Service Usage Admin
+    * Storage Admin
+
 1.  **Infrastructure (`infrastructure.yaml`):**
     * Triggers on pushes to `main` affecting the `terraform/` directory.
     * Authenticates to GCP using a Service Account Key (stored as `GCP_SA_KEY` secret).

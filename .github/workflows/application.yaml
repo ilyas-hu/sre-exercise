@@ -46,11 +46,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          # Add dev requirements if needed: pip install -r requirements-dev.txt
+        working-directory: ./birthday-app
 
       # Run Tests 
       - name: Run Pytest
         run: pytest -v
+        working-directory: ./birthday-app
 
       # Authenticate to Google Cloud using Service Account Key
       - name: Authenticate to Google Cloud
